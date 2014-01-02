@@ -1,5 +1,6 @@
 var fs = require('fs');
 var url = require('url');
+var tld = require('./node-tld/lib/tld.js');
 
 var fileName = process.argv[2];
 
@@ -42,6 +43,13 @@ for (var num in content) {
   }
 
   domain = parsedUrl.hostname.replace(WILD_CARD_PLACE_HOLDER, '*');
+
+  // Check the top level domain, only keep the root domain for *.domain.com
+  var rootDomain = tld.registered(domain);
+  if (domain == "*." + rootDomain) {
+    console.log("Only keep root domain: " + domain);
+    domain = rootDomain;
+  }
 
   if (!_results[domain]) {
     _results[domain] = {};

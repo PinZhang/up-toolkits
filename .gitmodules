@@ -1,0 +1,3 @@
+[submodule "node-tld"]
+	path = node-tld
+	url = https://github.com/donpark/node-tld.git
