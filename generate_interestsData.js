@@ -36,8 +36,12 @@ for (var num in content) {
     continue;
   }
 
+  if (parsedUrl.query) {
+    console.log('Skip rules with query: ' + domain);
+    continue;
+  }
+
   domain = parsedUrl.hostname.replace(WILD_CARD_PLACE_HOLDER, '*');
-  console.log(domain);
 
   if (!_results[domain]) {
     _results[domain] = {};
