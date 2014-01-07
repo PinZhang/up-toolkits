@@ -105,9 +105,9 @@ for (var num in content) {
   }
 
   // set keywords
-  // var keywords = (cells[4] || '__ANY').split('-');
-  // keywords.forEach(_setKeyword);
-  _setKeyword(cells[4] || '__ANY');
+  var keywords = (cells[4] || '__ANY').split('-');
+  keywords.forEach(_setKeyword);
+  // _setKeyword(cells[4] || '__ANY');
 }
 
 if (process.argv[3]) {

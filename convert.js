@@ -1,4 +1,5 @@
 var fs = require('fs');
+var url = require('url');
 
 var fileName = process.argv[2];
 
@@ -27,17 +28,18 @@ for (var num in content) {
   }
 
   // remove http:// prefix and the trailing slash.
-  var tmps = /https*:\/\/(www>)*(.+)/i.exec(domain);
-  if (!tmps || tmps.length !== 3) {
+  var WILD_CARD_PLACE_HOLDER = 'awefwefwefwewsssssssfewfwe';  // Make sure * is parsed
+  var parsedUrl = url.parse(domain.replace('*', WILD_CARD_PLACE_HOLDER));
+
+  if (!parsedUrl.protocol) {
+    console.log('Invalid url: ' + domain);
     continue;
   }
 
-  if (tmps[2][tmps[2].length - 1] == '/') {
-    domain = tmps[2].substring(0, tmps[2].length - 1);
-  } else {
-    domain = tmps[2];
-  }
+  domain = parsedUrl.hostname.replace(WILD_CARD_PLACE_HOLDER, '*').replace(/^www\./i, '');
+  var pathName = parsedUrl.pathname.toLowerCase().replace(/\/$/, '');
 
+  domain += pathName;
   if (!_results[domain]) {
     _results[domain] = [];
   }
