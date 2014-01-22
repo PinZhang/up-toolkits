@@ -28,9 +28,8 @@ for (var num in content) {
     continue;
   }
 
-  // remove http:// prefix and the trailing slash.
-  var WILD_CARD_PLACE_HOLDER = 'awefwefwefwewsssssssfewfwe';  // Make sure * is parsed
-  var parsedUrl = url.parse(domain.replace('*', WILD_CARD_PLACE_HOLDER));
+  // remove http://www. and http://*. prefix and the trailing slash.
+  var parsedUrl = url.parse(domain.replace('*.', '').replace('www.', ''));
 
   if (!parsedUrl.protocol) {
     console.log('Invalid url: ' + domain);
@@ -42,61 +41,47 @@ for (var num in content) {
     continue;
   }
 
-  domain = parsedUrl.hostname.replace(WILD_CARD_PLACE_HOLDER, '*');
+  domain = parsedUrl.hostname;
 
-  // Check the top level domain, only keep the root domain for *.domain.com
+  // Get top level domain
   var rootDomain = tld.registered(domain);
-  if (domain == "*." + rootDomain) {
-    console.log("Only keep root domain: " + domain);
-    domain = rootDomain;
+  var subdomainTokens = [];
+  if (rootDomain != domain) {
+    domain.substring(0, domain.length - rootDomain.length).
+      split('.').forEach(function(sub) {
+      if (!sub)
+        return;
+      subdomainTokens.push(sub + '.');
+    });
+    console.log(JSON.stringify(subdomainTokens));
   }
 
-  if (!_results[domain]) {
-    _results[domain] = {};
+  if (!_results[rootDomain]) {
+    _results[rootDomain] = {};
   }
 
   var pathName = parsedUrl.pathname.toLowerCase().replace(/\/$/, '');
-  if (pathName != '') {
-    if (!_results[domain]['__PATH']) {
-      _results[domain]['__PATH'] = {};
-    }
+  var pathNameTokens = [];
+  pathName.split('/').forEach(function(p) {
+    if (!p) return;
+    pathNameTokens.push('/' + p);
+  });
 
-    _results[domain]['__PATH'][pathName] = {};
-  }
-
-
-  function fixedHex(number, length) {
-    var str = number.toString(16).toUpperCase();
-    while (str.length < length) {
-      str = "0" + str;
-    }
-
-    return str;
-  }
-
-  function toUnicode(str) {
-    var result = "";
-
-    for (var i = 0; i < str.length; i++) {
-      var charCode = str.charCodeAt(i);
-      if (charCode > 126 || charCode < 32) {
-        result += "\\u" + fixedHex(charCode, 4);
-      } else {
-        result += str[i];
-      }
-    }
-
-    return result;
-  }
-
+  var keywordTokens = subdomainTokens.concat(pathNameTokens);
   function _setKeyword(keyword) {
-    var container = pathName ? _results[domain]['__PATH'][pathName] : _results[domain];
+    var k = null;
 
-    // keyword = toUnicode(keyword.trim());
-    keyword = keyword.trim();
-    var ks = container[keyword];
+    if (keyword == '__ANY' && keywordTokens.length == 0) {
+      k = keyword;
+    } else if (keyword == '__ANY') {
+      k = keywordTokens.join(' ');
+    } else {
+      k = keywordTokens.concat([keyword]).join(' ');
+    }
+
+    ks = _results[rootDomain][k];
     if (!ks) {
-      ks = container[keyword] = [];
+      ks = _results[rootDomain][k] = [];
     }
 
     if (ks.indexOf(keyword) < 0) {
@@ -107,11 +92,10 @@ for (var num in content) {
   // set keywords
   var keywords = (cells[4] || '__ANY').split('-');
   keywords.forEach(_setKeyword);
-  // _setKeyword(cells[4] || '__ANY');
 }
 
 if (process.argv[3]) {
-  fs.writeFileSync(process.argv[3], 'var interestsdata = ' + JSON.stringify(_results, null, 4) + ';');
+  fs.writeFileSync(process.argv[3], 'var interestsData = ' + JSON.stringify(_results, null, 4) + ';');
 } else {
   console.log(_results);
 }
